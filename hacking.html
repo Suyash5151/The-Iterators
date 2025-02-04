@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geoapify Route Map</title>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .inputs {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .inputs input {
+            width: 48%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .inputs button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .inputs button:hover {
+            background-color: #45a049;
+        }
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+        }
+        ul.suggestions {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            position: absolute;
+            z-index: 1000;
+            background: white;
+            width: 48%;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        ul.suggestions li {
+            padding: 10px;
+            cursor: pointer;
+        }
+        ul.suggestions li:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Geoapify Route Map</h1>
+        <p>Enter start and destination locations to see the route.</p>
+    </header>
+
+    <div class="container">
+        <div class="inputs">
+            <input id="start" type="text" placeholder="Enter Start Location" autocomplete="off">
+            <input id="end" type="text" placeholder="Enter Destination" autocomplete="off">
+        </div>
+        <button onclick="getRoute()">Show Route</button>
+        <div id="map"></div>
+    </div>
+
+    <script>
+        var map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=1189b52babb14cf98b15ef0344852f28', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        var routeLayer, busMarkers = [];
+
+        async function getRoute() {
+            let start = document.getElementById("start").value;
+            let end = document.getElementById("end").value;
+            
+            // Geocoding to check if start and end addresses are valid
+            let startCoords = await geocodeAddress(start);
+            let endCoords = await geocodeAddress(end);
+
+            if (!startCoords || !endCoords) {
+                alert('Invalid start or end location');
+                return;
+            }
+
+            let geoapifyUrl = `https://api.geoapify.com/v1/routing?waypoints=${startCoords[0]},${startCoords[1]}|${endCoords[0]},${endCoords[1]}&mode=drive&apiKey=1189b52babb14cf98b15ef0344852f28`;
+            let response = await fetch(geoapifyUrl);
+            let data = await response.json();
+
+            if (data.features && data.features.length > 0) {
+                let coords = data.features[0].geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
+                
+                if (routeLayer) map.removeLayer(routeLayer);
+                routeLayer = L.polyline(coords, { color: 'black', weight: 4 }).addTo(map);
+                map.fitBounds(routeLayer.getBounds());
+
+                // Remove old bus markers
+                busMarkers.forEach(marker => map.removeLayer(marker));
+                busMarkers = [];
+
+                // Add 10 bus markers with equal separation
+                let numBuses = 10;
+                let separationInterval = Math.floor(coords.length / numBuses);
+                for (let i = 0; i < numBuses; i++) {
+                    let busPos = coords[i * separationInterval];
+                    let busMarker = L.marker(busPos, { icon: L.icon({ iconUrl: 'bus.webp', iconSize: [30, 30] }) }).addTo(map);
+                    busMarkers.push(busMarker);
+                }
+
+                moveBuses(coords);
+            } else {
+                alert('Route not found');
+            }
+        }
+
+        async function geocodeAddress(address) {
+            const geoapifyUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(address)}&apiKey=1189b52babb14cf98b15ef0344852f28`;
+            const response = await fetch(geoapifyUrl);
+            const data = await response.json();
+            
+            if (data.features && data.features.length > 0) {
+                const feature = data.features[0];
+                return feature.geometry.coordinates.reverse(); // [longitude, latitude]
+            } else {
+                return null; // Return null if no results
+            }
+        }
+
+        function moveBuses(route) {
+            let i = 0;
+            let busIndex = 0;
+            let interval = 1000;  // Adjusted the speed here to slow down the animation
+
+            function animate() {
+                if (i < route.length) {
+                    // Move each bus marker along the route, one after the other
+                    busMarkers.forEach((marker, index) => {
+                        let positionIndex = (i + index) % route.length;  // Position of each bus
+                        marker.setLatLng(route[positionIndex]);
+                    });
+                    i++;
+                    setTimeout(animate, interval);  // Adjusted speed here by changing the interval
+                }
+            }
+            animate();
+        }
+
+        // Autocomplete functionality for the start and end input fields
+        async function fetchSuggestions(query, inputElement) {
+            const geoapifyUrl = `https://api.geoapify.com/v1/places/search?text=${encodeURIComponent(query)}&apiKey=1189b52babb14cf98b15ef0344852f28`;
+            const response = await fetch(geoapifyUrl);
+            const data = await response.json();
+
+            const suggestions = data.features || [];
+            const suggestionsList = document.createElement('ul');
+            suggestionsList.classList.add('suggestions');
+
+            suggestions.forEach(suggestion => {
+                const li = document.createElement('li');
+                li.textContent = suggestion.properties.formatted;
+                li.onclick = function () {
+                    inputElement.value = suggestion.properties.formatted;
+                    document.body.removeChild(suggestionsList);
+                };
+                suggestionsList.appendChild(li);
+            });
+
+            const existingSuggestions = document.querySelector('.suggestions');
+            if (existingSuggestions) existingSuggestions.remove();
+            document.body.appendChild(suggestionsList);
+        }
+
+        // Event listeners for input fields to show autocomplete suggestions
+        document.getElementById('start').addEventListener('input', (e) => fetchSuggestions(e.target.value, e.target));
+        document.getElementById('end').addEventListener('input', (e) => fetchSuggestions(e.target.value, e.target));
+    </script>
+</body>
+</html>
