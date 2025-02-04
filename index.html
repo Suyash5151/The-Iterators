@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #8360c3, #2ebf91);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .title {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 350px;
+            text-align: center;
+        }
+        .container h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .oauth {
+            margin-top: 15px;
+        }
+        .oauth button {
+            background-color: #db4437;
+            margin-top: 10px;
+        }
+        .oauth button:hover {
+            background-color: #b03024;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">The Iterators</div>
+    <div class="container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <select id="role">
+                <option value="admin">Admin</option>
+                <option value="student">Student</option>
+            </select>
+            <input type="text" id="username" placeholder="Enter Username" required>
+            <input type="password" id="password" placeholder="Enter Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <div class="oauth">
+            <p>Or login with:</p>
+            <button type="button">Google</button>
+            <button type="button">Facebook</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value; // Get the selected role
+
+            if (username && password) {
+                // Redirect based on role
+                if (role === "student") {
+                    window.location.href = "hacking.html"; // Redirect to hacking.html for student
+                } else if (role === "admin") {
+                    window.location.href = "https://swayam-swaroop-sahu.github.io/Energy-Spike-Detection/"; // Redirect to admin link
+                }
+            } else {
+                alert("Please enter valid credentials");
+            }
+        });
+    </script>
+</body>
+</html>
