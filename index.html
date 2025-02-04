@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #73c8a9, #373b44);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px;
+        }
+        .login-box {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            width: 320px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .login-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+        }
+        .login-box h2 {
+            margin-bottom: 25px;
+            color: #333;
+            font-size: 26px;
+            font-weight: bold;
+        }
+        .input-field {
+            width: 100%;
+            padding: 15px 15px 15px 40px; /* Added left padding for the icon */
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .input-field:focus {
+            border-color: #4CAF50;
+        }
+        .input-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+        }
+        .form-container {
+            position: relative;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .login-box.energy {
+            background-color: #ffebcd;  /* Light beige for Energy Login */
+            border-left: 6px solid #4CAF50; /* Green border */
+        }
+        .login-box.shuttle {
+            background-color: #f0f8ff;  /* Light blue for Shuttle App Login */
+            border-left: 6px solid #ff9800; /* Orange border */
+        }
+        .login-box.askvit {
+            background-color: #fffacd;  /* Light yellow for AskVIT Login */
+            border-left: 6px solid #2196f3; /* Blue border */
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        .footer {
+            position: absolute;
+            bottom: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Energy Login -->
+        <div class="login-box energy">
+            <h2>Energy Login</h2>
+            <form id="energy-form">
+                <div class="form-container">
+                    <i class="fas fa-id-card input-icon"></i>
+                    <input type="text" class="input-field" id="energy-username" placeholder="Enter Employee Id" required pattern="\d{6}" title="Employee ID must be a 6-digit number"><br>
+                </div>
+                <div class="form-container">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" class="input-field" id="energy-password" placeholder="Enter 6-digit Password" required pattern="\d{6}" title="Password must be a 6-digit number"><br>
+                </div>
+                <button type="submit" class="btn">Login</button>
+                <p class="error" id="energy-error"></p>
+            </form>
+        </div>
+
+        <!-- VIT Shuttle App Login -->
+        <div class="login-box shuttle">
+            <h2>VIT Shuttle Login</h2>
+            <form action="hi.html" method="get">
+                <div class="form-container">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" class="input-field" id="shuttle-username" placeholder="Enter Registration No." required><br>
+                </div>
+                <div class="form-container">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" class="input-field" id="shuttle-password" placeholder="Enter Password" required><br>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+
+        <!-- AskVIT Login -->
+        <div class="login-box askvit">
+            <h2>AskVIT Login</h2>
+            <form action="https://nagasai-datta.github.io/chat_bot/" method="get">
+                <div class="form-container">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" class="input-field" id="askvit-username" placeholder="Enter Registration No." required><br>
+                </div>
+                <div class="form-container">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" class="input-field" id="askvit-password" placeholder="Enter Password" required><br>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Energy login validation for 6-digit username and password
+        document.getElementById("energy-form").addEventListener("submit", function (event) {
+            const username = document.getElementById("energy-username").value;
+            const password = document.getElementById("energy-password").value;
+            const errorElement = document.getElementById("energy-error");
+
+            // Check if username and password are exactly 6 digits
+            if (username.length !== 6 || password.length !== 6) {
+                event.preventDefault(); // Prevent form submission
+                errorElement.textContent = "Employee ID and Password must be exactly 6 digits.";
+            } else {
+                errorElement.textContent = ""; // Clear error message
+            }
+        });
+    </script>
+</body>
+</html>
