@@ -3,105 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <title>VIT Shuttle Tracking App</title>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: linear-gradient(to right, #8360c3, #2ebf91);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #e3f2fd;
         }
-        .title {
-            font-size: 36px;
-            font-weight: bold;
+        header {
+            background-color: #1565c0;
             color: white;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-            margin-bottom: 20px;
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .wallet {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         .container {
-            background: white;
-            padding: 30px;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            width: 350px;
             text-align: center;
         }
-        .container h2 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        input, select, button {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .oauth {
+        .location-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
             margin-top: 15px;
         }
-        .oauth button {
-            background-color: #db4437;
+        .location-buttons button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #1565c0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .location-buttons button:hover {
+            background-color: #0d47a1;
+        }
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
             margin-top: 10px;
         }
-        .oauth button:hover {
-            background-color: #b03024;
+        #distance, #price {
+            font-size: 20px;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #d32f2f;
+            background-color: #ffcdd2;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
-    <div class="title">The Iterators</div>
+    <header>
+        <h1>VIT Shuttle Tracking App</h1>
+        <p>Enter start and destination locations to see the route.</p>
+    </header>
+    <div class="wallet">Wallet: <span id="wallet">77</span> Credits</div>
     <div class="container">
-        <h2>Login</h2>
-        <form id="loginForm">
-            <select id="role">
-                <option value="admin">Admin</option>
-                <option value="student">Student</option>
-            </select>
-            <input type="text" id="username" placeholder="Enter Username" required>
-            <input type="password" id="password" placeholder="Enter Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <div class="oauth">
-            <p>Or login with:</p>
-            <button type="button">Google</button>
-            <button type="button">Facebook</button>
+        <input id="start" type="text" placeholder="Enter Start Location">
+        <input id="end" type="text" placeholder="Enter Destination">
+        <button onclick="getRoute()">Show Route</button>
+        <p id="distance"></p>
+        <p id="price"></p>
+        <div class="location-buttons">
+            <button onclick="quickSelectLocation('kalpana chawla ground')">VIT Main Gate</button>
+            <button onclick="quickSelectLocation('Silver Jubilee Tower')">Silver Jubilee Tower</button>
+            <button onclick="quickSelectLocation('Greenos')">Foodys</button>
+            <button onclick="quickSelectLocation('Woodys')">Woodys</button>
+            <button onclick="quickSelectLocation('VIT Lake')">Girls Hostel</button>
+            <button onclick="quickSelectLocation('Pearl Research Park')">Pearl Research Park</button>
+            <button onclick="quickSelectLocation('TT Fountain Garden')">TT Fountain Garden</button>
+            <button onclick="quickSelectLocation('EV Periyar Library')">EV Periyar Library</button>
+            <button onclick="quickSelectLocation('MH Swimming Pool')">MH Swimming Pool</button>
+            <button onclick="quickSelectLocation('VIT Indoor Stadium')">VIT Indoor Stadium</button>
+            
         </div>
+        <div id="map"></div>
     </div>
-
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent form submission
+        var map = L.map('map').setView([12.9716, 79.1583], 13);
+        L.tileLayer('https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=1189b52babb14cf98b15ef0344852f28', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value; // Get the selected role
+        var shuttleIcon = L.icon({ iconUrl: 'bus.webp', iconSize: [40, 40] });
+        var shuttleMarker;
+        var routeLayer;
 
-            if (username && password) {
-                // Redirect based on role
-                if (role === "student") {
-                    window.location.href = "hacking.html"; // Redirect to hacking.html for student
-                } else if (role === "admin") {
-                    window.location.href = "https://swayam-swaroop-sahu.github.io/Energy-Spike-Detection/"; // Redirect to admin link
-                }
-            } else {
-                alert("Please enter valid credentials");
+        async function geocodeAddress(address) {
+            let geoapifyUrl = `https://api.geoapify.com/v1/geocode/search?text=${address}&apiKey=1189b52babb14cf98b15ef0344852f28`;
+            let response = await fetch(geoapifyUrl);
+            let data = await response.json();
+            if (data.features && data.features.length > 0) {
+                return [data.features[0].geometry.coordinates[1], data.features[0].geometry.coordinates[0]]; // Return [lat, lon]
             }
-        });
+            return null;
+        }
+
+        async function getRoute() {
+            let start = document.getElementById("start").value;
+            let end = document.getElementById("end").value;
+            if (!start || !end) return;
+
+            let startCoords = await geocodeAddress(start);
+            let endCoords = await geocodeAddress(end);
+
+            if (!startCoords || !endCoords) {
+                return alert('Invalid start or end location');
+            }
+
+            let geoapifyUrl = `https://api.geoapify.com/v1/routing?waypoints=${startCoords[0]},${startCoords[1]}|${endCoords[0]},${endCoords[1]}&mode=drive&apiKey=1189b52babb14cf98b15ef0344852f28`;
+            let response = await fetch(geoapifyUrl);
+            let data = await response.json();
+
+            if (data.features && data.features.length > 0) {
+                let coords = data.features[0].geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
+                let distance = (data.features[0].properties.distance / 1000).toFixed(2); // Distance in km
+
+                // Price calculation logic
+                let price;
+                if (distance < 0.5) {
+                    price = 10; // Fixed price for distances less than 500m
+                } else {
+                    // Calculate price for distances between 500m (0.5 km) and 2km
+                    price = Math.min((distance * 10), 20); // Price scales with distance but capped at 20 credits
+                }
+
+                document.getElementById("distance").textContent = `Total Distance: ${distance} km`;
+                document.getElementById("price").textContent = `Estimated Price: ${price} Credits`;
+
+                if (routeLayer) map.removeLayer(routeLayer);
+                routeLayer = L.polyline(coords, { color: 'black', weight: 4 }).addTo(map);
+                map.fitBounds(routeLayer.getBounds());
+
+                if (shuttleMarker) map.removeLayer(shuttleMarker);
+                shuttleMarker = L.marker(coords[0], { icon: shuttleIcon }).addTo(map);
+                moveShuttle(coords);
+            } else {
+                alert('Route not found');
+            }
+        }
+
+        function quickSelectLocation(location) {
+            if (!document.getElementById("start").value) document.getElementById("start").value = location;
+            else document.getElementById("end").value = location;
+            getRoute();
+        }
+
+        function moveShuttle(coords) {
+            let i = 0;
+            let interval = setInterval(() => {
+                if (i < coords.length) {
+                    shuttleMarker.setLatLng(coords[i]);
+                    i++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 500);
+        }
     </script>
 </body>
 </html>
